@@ -1,58 +1,52 @@
-<script lang="ts">
-import { ref, defineComponent, watch, onMounted } from "vue";
+<script setup lang="ts">
+import { ref, watch, onMounted, nextTick, shallowRef } from "vue";
 import { LanguageSupport } from "@codemirror/language";
-
 import CodeMirror from "vue-codemirror6";
 import { basicSetup } from "codemirror";
+import type { Extension } from "@codemirror/state";
 
-export default defineComponent({
-  components: {
-    CodeMirror,
-  },
-  setup() {
-    const value = ref<string>(`fmt.Println("Hello world")`);
-    const availableLanguages = ref(["go", "javascript"]);
-    const selectedLanguage = ref("go");
-    let extensions = ref<any[]>([]);
+const value = ref<string>(`fmt.Println("Hello world")`);
+const availableLanguages = ref(["go", "javascript"]);
+const selectedLanguage = ref("go");
 
-    const loadLang = async (
-      lang: string
-    ): Promise<LanguageSupport | undefined> => {
-      try {
-        switch (lang) {
-          case "go":
-            return await import("@codemirror/lang-go").then((m) => m.go());
-          case "javascript":
-            return await import("@codemirror/lang-javascript").then((m) =>
-              m.javascript()
-            );
-          default:
-            throw new Error(`Language ${lang} is not supported`);
-        }
-      } catch (error) {
-        console.error("Error loading language:", error);
-      }
-    };
+// use shallowRef to avoid typescript yelling type inference too deep
+const extensions = shallowRef<Extension[]>([basicSetup]);
 
-    onMounted(async () => {
-      const module = await loadLang(selectedLanguage.value);
-      if (module) {
-        extensions.value = [basicSetup, module];
-      }
-    });
+const loadLang = async (lang: string): Promise<LanguageSupport | null> => {
+  try {
+    switch (lang) {
+      case "go":
+        return await import("@codemirror/lang-go").then((m) => m.go());
+      case "javascript":
+        return await import("@codemirror/lang-javascript").then((m) =>
+          m.javascript()
+        );
+      default:
+        throw new Error(`Language ${lang} is not supported`);
+    }
+  } catch (error) {
+    console.error("Error loading language:", error);
+    return null;
+  }
+};
 
-    watch(selectedLanguage, async (newLang) => {
-      const module = await loadLang(newLang);
-      if (module) {
-        console.log("succesfully changed to ", newLang);
-        extensions.value = [basicSetup, module];
-      }
-    });
+const updateExtensions = async (lang: string) => {
+  const langSupport = await loadLang(lang);
+  if (langSupport) {
+    extensions.value = [basicSetup, langSupport];
+    await nextTick();
+  }
+};
 
-    return { availableLanguages, selectedLanguage, extensions, value };
-  },
+onMounted(() => {
+  updateExtensions(selectedLanguage.value);
+});
+
+watch(selectedLanguage, async (newLang) => {
+  updateExtensions(newLang);
 });
 </script>
+
 <template>
   <select v-model="selectedLanguage">
     <option
