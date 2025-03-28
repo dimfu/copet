@@ -118,3 +118,26 @@ func (a *App) CreateFile(p string) (string, error) {
 	defer f.Close()
 	return target, nil
 }
+
+func (a *App) UpdateFile(p string, s string) error {
+	f, err := os.OpenFile(p, os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := f.Truncate(0); err != nil {
+		return err
+	}
+
+	if _, err := f.Seek(0, 0); err != nil {
+		return err
+	}
+
+	// Write new content
+	if _, err := f.Write([]byte(s)); err != nil {
+		return err
+	}
+
+	return nil
+}

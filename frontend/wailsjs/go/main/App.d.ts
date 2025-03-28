@@ -6,3 +6,5 @@ export function CreateFile(arg1:string):Promise<string>;
 export function GetSnippetPaths():Promise<Array<string>>;
 
 export function ReadFile(arg1:string):Promise<string>;
+
+export function UpdateFile(arg1:string,arg2:string):Promise<void>;

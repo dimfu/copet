@@ -1,15 +1,38 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick, shallowRef } from "vue";
+import { ref, watch, onMounted, nextTick, shallowRef, computed } from "vue";
 import { LanguageSupport } from "@codemirror/language";
 import CodeMirror from "vue-codemirror6";
 import { basicSetup } from "codemirror";
 import type { Extension } from "@codemirror/state";
+import { UpdateFile } from "../../wailsjs/go/main/App.js";
+import { promiseResult } from "../utils/promiseResult.js";
 
 const props = defineProps({
   value: String,
+  activePath: String,
 });
 
-const value = ref<string>(props.value ?? "");
+// debounced value update
+const timeout = ref<number | null>(null);
+const input = ref<string>(props.value ?? "");
+const debouncedInput = ref<string>("");
+watch(input, (newValue: string) => {
+  if (timeout.value) clearTimeout(timeout.value);
+  timeout.value = setTimeout(() => {
+    debouncedInput.value = newValue;
+    if (props.activePath!.length != 0) {
+      (async () => {
+        const [error] = await promiseResult(
+          UpdateFile(props.activePath!, debouncedInput.value)
+        );
+        if (error) {
+          console.error("error while saving file:", error);
+        }
+      })();
+    }
+  }, 300);
+});
+
 const availableLanguages = ref(["go", "javascript"]);
 const selectedLanguage = ref("go");
 
@@ -50,10 +73,11 @@ watch(selectedLanguage, async (newLang) => {
   updateExtensions(newLang);
 });
 
+// when changing file it suppose to update the editor
 watch(
   () => props.value,
   (newValue) => {
-    value.value = newValue ?? "";
+    input.value = newValue ?? "";
   }
 );
 </script>
@@ -68,5 +92,5 @@ watch(
       {{ language }}
     </option>
   </select>
-  <code-mirror :extensions="extensions" v-model="value" />
+  <code-mirror :extensions="extensions" v-model="input" />
 </template>

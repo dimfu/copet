@@ -11,6 +11,7 @@ import { promiseResult } from "./utils/promiseResult.js";
 
 const snippets = ref<string[]>([]);
 const snippet = ref<string>("");
+const activePath = ref<string>("");
 const newfileInput = ref<string>("");
 
 const getSnippetPaths = async (): Promise<Array<string>> => {
@@ -38,6 +39,7 @@ const handleClickSnippet = async (path: string) => {
     return;
   }
   snippet.value = value;
+  activePath.value = path;
 };
 
 // temporary file creation
@@ -76,5 +78,5 @@ onMounted(getSnippetPaths);
   </ul>
   <input type="text" placeholder="new file name" v-model="newfileInput" />
   <n-button @click="handleCreateSnippet()">create</n-button>
-  <Editor :value="snippet" />
+  <Editor :active-path="activePath" :value="snippet" />
 </template>
