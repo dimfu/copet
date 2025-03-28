@@ -5,7 +5,11 @@ import CodeMirror from "vue-codemirror6";
 import { basicSetup } from "codemirror";
 import type { Extension } from "@codemirror/state";
 
-const value = ref<string>(`fmt.Println("Hello world")`);
+const props = defineProps({
+  value: String,
+});
+
+const value = ref<string>(props.value ?? "");
 const availableLanguages = ref(["go", "javascript"]);
 const selectedLanguage = ref("go");
 
@@ -45,6 +49,13 @@ onMounted(() => {
 watch(selectedLanguage, async (newLang) => {
   updateExtensions(newLang);
 });
+
+watch(
+  () => props.value,
+  (newValue) => {
+    value.value = newValue ?? "";
+  }
+);
 </script>
 
 <template>
