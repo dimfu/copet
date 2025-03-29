@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import { main } from "../../wailsjs/go/models";
-
 const props = defineProps<{ dirNode: main.dirNode }>();
-
 const emit = defineEmits(["file-click"]);
 </script>
 

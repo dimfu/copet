@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-import { NButton } from "naive-ui";
+import { NButton, NSplit } from "naive-ui";
 import {
   CreateFile,
   GetSnippetPaths,
@@ -15,6 +15,10 @@ const snippets = ref<main.dirNode>({ files: [], subdirs: {} });
 const snippet = ref<string>("");
 const activePath = ref<string>("");
 const newfileInput = ref<string>("");
+
+const DEFAULT_SPLIT = 0.15;
+// its a hack, dw about it without 0.01 the split aint going anywhere at the first place
+const split = ref<number>(DEFAULT_SPLIT + 0.01);
 
 const getSnippetPaths = async () => {
   const [error, node] = await promiseResult(GetSnippetPaths());
@@ -66,12 +70,49 @@ const handleCreateSnippet = async () => {
   await readSnippet(path);
 };
 
+const handleDragMove = (event: Event) => {
+  const mEvent = event as MouseEvent;
+  const pane = document.querySelector(".n-split-pane-1") as HTMLElement;
+  if (pane) {
+    if (mEvent.clientX <= pane.clientWidth / 2) {
+      split.value = 0.0;
+    }
+  }
+};
+
+const handleUpdateSize = (val: string | number) => {
+  val = Number(val);
+  if (isNaN(val)) return;
+
+  if (
+    (split.value != 0 && val > DEFAULT_SPLIT / 2 - 0.0001) ||
+    (split.value == 0 && val > DEFAULT_SPLIT)
+  ) {
+    split.value = val;
+  }
+};
+
 onMounted(getSnippetPaths);
 </script>
 
 <template>
-  <FileTreeNode :dir-node="snippets" @file-click="handleClickSnippet" />
-  <input type="text" placeholder="new file name" v-model="newfileInput" />
-  <n-button @click="handleCreateSnippet()">create</n-button>
-  <Editor :active-path="activePath" :value="snippet" />
+  <n-split
+    v-model:size="split"
+    :on-drag-move="handleDragMove"
+    :on-update:size="handleUpdateSize"
+    direction="horizontal"
+    :max="1"
+    :min="0.15"
+  >
+    <template #1>
+      <div :style="{ height: '200px' }">
+        <input type="text" placeholder="new file name" v-model="newfileInput" />
+        <n-button @click="handleCreateSnippet()">create</n-button>
+        <FileTreeNode :dir-node="snippets" @file-click="handleClickSnippet" />
+      </div>
+    </template>
+    <template #2>
+      <Editor :active-path="activePath" :value="snippet" />
+    </template>
+  </n-split>
 </template>
