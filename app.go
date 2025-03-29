@@ -141,7 +141,7 @@ func (a *App) CreateFile(p string) (string, error) {
 		return "", fmt.Errorf("error creating file: %v", err.Error())
 	}
 	defer f.Close()
-	return target, nil
+	return p, nil
 }
 
 func (a *App) UpdateFile(p string, s string) error {
