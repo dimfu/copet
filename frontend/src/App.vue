@@ -7,26 +7,29 @@ import {
   ReadFile,
 } from "../wailsjs/go/main/App.js";
 import Editor from "./components/Editor.vue";
+import FileTreeNode from "./components/FileTreeNode.vue";
 import { promiseResult } from "./utils/promiseResult.js";
+import { main } from "../wailsjs/go/models.js";
 
-const snippets = ref<string[]>([]);
+const snippets = ref<main.dirNode>({ files: [], subdirs: {} });
 const snippet = ref<string>("");
 const activePath = ref<string>("");
 const newfileInput = ref<string>("");
 
-const getSnippetPaths = async (): Promise<Array<string>> => {
-  const [error, paths] = await promiseResult(GetSnippetPaths());
+const getSnippetPaths = async () => {
+  const [error, node] = await promiseResult(GetSnippetPaths());
   if (error) {
     console.error("error getting paths:", error.message);
     return [];
   }
-  snippets.value = paths;
-  return paths;
+  // serialize transformed object to class dirnode
+  snippets.value = Object.assign(new main.dirNode(), node);
 };
 
 const readSnippet = async (path: string): Promise<string> => {
   const [error, value] = await promiseResult(ReadFile(path));
   if (error) {
+    console.error(error);
     return "";
   }
   return value;
@@ -67,15 +70,7 @@ onMounted(getSnippetPaths);
 </script>
 
 <template>
-  <ul>
-    <li
-      v-for="(path, idx) in snippets"
-      :key="idx"
-      @click="handleClickSnippet(path)"
-    >
-      {{ path }}
-    </li>
-  </ul>
+  <FileTreeNode :dir-node="snippets" @file-click="handleClickSnippet" />
   <input type="text" placeholder="new file name" v-model="newfileInput" />
   <n-button @click="handleCreateSnippet()">create</n-button>
   <Editor :active-path="activePath" :value="snippet" />

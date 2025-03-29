@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -61,41 +62,65 @@ func (a *App) createWorkspace() (string, error) {
 	return p, nil
 }
 
-func (a *App) GetSnippetPaths() ([]string, error) {
-	paths:= []string{}
-	p := a.Config.Workspace
-	if len(p) == 0 {
-		err := "workspace path is not yet defined"
-		runtime.LogError(a.ctx, err)		
-		return paths, errors.New(err)
-	}
+type dirNode struct {
+	Files []string `json:"files"`
+	Subdirs map[string]*dirNode `json:"subdirs"`
+}
 
-	target := path.Join(p)
-	dir, err := os.Open(target)
-	if err != nil {
-		runtime.LogError(a.ctx, fmt.Sprintf("error while opening directory %v, %v\n", p, err))
-		return paths, err
+func NewDirNode() *dirNode {
+	return &dirNode{
+		Files: []string{},
+		Subdirs: map[string]*dirNode{},
 	}
+}
 
-	entries, err := dir.ReadDir(0)
-	if err != nil {
-		runtime.LogError(a.ctx, fmt.Sprintf("error while reading directory %v, %v\n", p, err))
-		return paths, err
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
+func (a *App) scanDirs() (*dirNode, error) {
+	root := NewDirNode()	
+	err := filepath.Walk(a.Config.Workspace, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
-		paths = append(paths, filepath.Join(dir.Name(), entry.Name()))
-	}
 
-	return paths, nil
+		rel, _ := filepath.Rel(a.Config.Workspace, path)
+		if rel == "." {
+			return nil
+		}
+
+		parent := root
+		parts := strings.Split(rel, string(os.PathSeparator))
+
+		// set parent dir to the current directory of where the file at
+		for i := 0; i < len(parts)-1; i++ {
+			dir := parts[i]
+			if _, exists := parent.Subdirs[dir]; !exists {
+				parent.Subdirs[dir] = NewDirNode()
+			} 
+			parent = parent.Subdirs[dir]
+		}
+
+		if info.IsDir() {
+			parent.Subdirs[info.Name()] = NewDirNode()
+		} else {
+			parent.Files = append(parent.Files, rel)
+		}
+
+		return nil
+	})
+	return root, err
+}
+
+func (a *App) GetSnippetPaths() (*dirNode, error) {
+	node, err := a.scanDirs()
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
 }
 
 func (a *App) ReadFile(p string) (string, error) {
-	b, err := os.ReadFile(p)
+	b, err := os.ReadFile(filepath.Join(a.Config.Workspace, p))
 	if err != nil {
+		runtime.LogError(a.ctx, err.Error())
 		return "", err
 	}
 	str := string(b)
@@ -120,7 +145,7 @@ func (a *App) CreateFile(p string) (string, error) {
 }
 
 func (a *App) UpdateFile(p string, s string) error {
-	f, err := os.OpenFile(p, os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filepath.Join(a.Config.Workspace, p), os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
