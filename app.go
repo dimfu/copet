@@ -127,6 +127,59 @@ func (a *App) ReadFile(p string) (string, error) {
 	return str, err
 }
 
+func getUniquePath(path string) string {
+	ext := filepath.Ext(path)
+	name := strings.TrimSuffix(filepath.Base(path), ext)
+	dir := filepath.Dir(path)
+
+	counter := 1
+	newPath := path
+
+	for {
+		newName := fmt.Sprintf("%s(%d)%s", name, counter, ext)
+		newPath = filepath.Join(dir, newName)
+
+		if _, err := os.Stat(newPath); os.IsNotExist(err) {
+			break 
+		}
+		counter++
+	}
+
+	return newPath
+}
+
+func (a *App) Move(src string, dst string) error {
+	srcPath := filepath.Join(a.Config.Workspace, src)
+	dstPath := filepath.Join(a.Config.Workspace, dst)
+
+	fileInfo, err := os.Stat(dstPath) 
+	if err != nil {
+		if os.IsNotExist(err) {
+			dstParent := filepath.Dir(dstPath)
+			if err := os.MkdirAll(dstParent, os.ModePerm); err != nil {
+				runtime.LogError(a.ctx, "failed to create destination directory: "+err.Error())
+				return fmt.Errorf("failed to create destination directory: %v", err.Error())
+			}
+		}
+		return err	
+	} 
+
+	if fileInfo.IsDir() {
+		dstPath = filepath.Join(dstPath, filepath.Base(srcPath))
+	}
+
+if _, err := os.Stat(dstPath); err == nil {
+		dstPath = getUniquePath(dstPath)
+	}
+
+	err = os.Rename(srcPath, dstPath)
+	if err != nil {
+		runtime.LogError(a.ctx, err.Error())
+		return err
+	} 
+	return nil
+}
+
 func (a *App) CreateFile(p string) (string, error) {
 	target := filepath.Join(a.Config.Workspace, p)
 	dir := filepath.Dir(target)

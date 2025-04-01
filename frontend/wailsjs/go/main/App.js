@@ -10,6 +10,10 @@ export function GetSnippetPaths() {
   return window['go']['main']['App']['GetSnippetPaths']();
 }
 
+export function Move(arg1, arg2) {
+  return window['go']['main']['App']['Move'](arg1, arg2);
+}
+
 export function ReadFile(arg1) {
   return window['go']['main']['App']['ReadFile'](arg1);
 }

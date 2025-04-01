@@ -108,7 +108,11 @@ onMounted(getSnippetPaths);
       <div :style="{ height: '200px' }">
         <input type="text" placeholder="new file name" v-model="newfileInput" />
         <n-button @click="handleCreateSnippet()">create</n-button>
-        <FileTreeNode :dir-node="snippets" @file-click="handleClickSnippet" />
+        <FileTreeNode
+          :dir-node="snippets"
+          @file-click="handleClickSnippet"
+          @get-snippet-paths="getSnippetPaths"
+        />
       </div>
     </template>
     <template #2>
