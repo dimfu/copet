@@ -22,6 +22,11 @@
   --fuji-10: #60743f;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+}
+
 html {
   background-color: var(--sumiink-5);
   color: var(--fuji-5);

@@ -2,7 +2,8 @@
 import { ref, watch, onMounted, nextTick, shallowRef } from "vue";
 import { LanguageSupport } from "@codemirror/language";
 import CodeMirror from "vue-codemirror6";
-import { NSelect, NSpace } from "naive-ui";
+import { NSelect, NIcon } from "naive-ui";
+import { OpenPanelLeft } from "@vicons/carbon";
 import { basicSetup } from "codemirror";
 import type { Extension } from "@codemirror/state";
 import { UpdateFile } from "../../../wailsjs/go/main/App.js";
@@ -14,6 +15,8 @@ const props = defineProps({
   value: String,
   activePath: String,
 });
+
+const emit = defineEmits(["toggle-split"]);
 
 // debounced value update
 const timeout = ref<number | null>(null);
@@ -89,7 +92,14 @@ watch(
 </script>
 
 <template>
-  <div class="header">{{ activePath }}</div>
+  <div class="header">
+    <n-icon size="22" @click="emit('toggle-split')">
+      <OpenPanelLeft />
+    </n-icon>
+    <span style="display: inline-block; font-size: 14px; font-weight: 500">
+      {{ activePath?.split("/").slice(-1).join("") }}
+    </span>
+  </div>
   <code-mirror :extensions="extensions" v-model="input" />
   <div class="lang">
     <n-select
@@ -105,6 +115,9 @@ watch(
 
 <style scoped>
 .header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
   width: 100%;
   min-height: 22px;
   padding: 16px;

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-import { NButton, NSplit } from "naive-ui";
+import { NSplit, NIcon } from "naive-ui";
+import { DocumentAdd, FolderAdd, OverflowMenuHorizontal } from "@vicons/carbon";
 import {
   CreateFile,
   GetSnippetPaths,
@@ -20,6 +21,16 @@ const newfileInput = ref<string>("");
 const DEFAULT_SPLIT = 0.15;
 // its a hack, dw about it without 0.01 the split aint going anywhere at the first place
 const split = ref<number>(DEFAULT_SPLIT + 0.01);
+const expandSplit = ref<boolean>(true);
+
+const toggleSplit = () => {
+  expandSplit.value = !expandSplit.value;
+  if (expandSplit.value) {
+    split.value = 0;
+  } else {
+    split.value = DEFAULT_SPLIT + 0.01;
+  }
+};
 
 const getSnippetPaths = async () => {
   const [error, node] = await promiseResult(GetSnippetPaths());
@@ -110,7 +121,22 @@ onMounted(getSnippetPaths);
       <template #1>
         <div class="header"></div>
         <div class="tree-container">
-          <!-- <span>Snippets</span> -->
+          <div class="tools-container">
+            <strong style="display: inline-block; font-size: 14px">
+              Snippets
+            </strong>
+            <div class="tools">
+              <n-icon size="17">
+                <DocumentAdd />
+              </n-icon>
+              <n-icon size="17">
+                <FolderAdd />
+              </n-icon>
+              <n-icon size="17">
+                <OverflowMenuHorizontal />
+              </n-icon>
+            </div>
+          </div>
           <!-- <input
             type="text"
             placeholder="new file name"
@@ -125,7 +151,11 @@ onMounted(getSnippetPaths);
         </div>
       </template>
       <template #2>
-        <Editor :active-path="activePath" :value="snippet" />
+        <Editor
+          @toggle-split="toggleSplit"
+          :active-path="activePath"
+          :value="snippet"
+        />
       </template>
     </n-split>
   </GlobalTheme>
@@ -139,5 +169,19 @@ onMounted(getSnippetPaths);
 }
 .tree-container {
   padding: 16px 8px;
+}
+
+.tools-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tools {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>
