@@ -151,7 +151,7 @@ func getUniquePath(path string) string {
 func (a *App) Move(src string, dst string) error {
 	srcPath := filepath.Join(a.Config.Workspace, src)
 	dstPath := filepath.Join(a.Config.Workspace, dst)
-
+	 
 	fileInfo, err := os.Stat(dstPath) 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -168,7 +168,7 @@ func (a *App) Move(src string, dst string) error {
 		dstPath = filepath.Join(dstPath, filepath.Base(srcPath))
 	}
 
-if _, err := os.Stat(dstPath); err == nil {
+	if _, err := os.Stat(dstPath); err == nil {
 		dstPath = getUniquePath(dstPath)
 	}
 

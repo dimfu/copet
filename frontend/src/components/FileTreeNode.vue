@@ -43,7 +43,6 @@ const createData = (
     filesArr.push(file);
 
     return {
-      directory: dir,
       label: fileName,
       key: file,
       isLeaf: true,
@@ -53,13 +52,17 @@ const createData = (
 
   const subdirs: TreeOptionWithDir[] = Object.entries(node.subdirs || {}).map(
     ([name, subdir]) => {
+      const currentPath = k != undefined ? `${k}/${name}` : name;
+
       // initialize map to avoid skipping empty folder from being listed in map
-      if (!filesMap.has(name)) {
-        filesMap.set(name, []);
+      if (!filesMap.has(currentPath)) {
+        filesMap.set(currentPath, []);
       }
+
       return {
+        directory: name,
         label: name,
-        key: k != undefined ? `${k}/${name}` : name,
+        key: currentPath,
         isLeaf: false,
         children: createData(subdir, name),
       };
@@ -70,8 +73,8 @@ const createData = (
 };
 
 const findSiblingsAndIndex = (
-  node: TreeOption,
-  nodes?: TreeOption[]
+  node: TreeOptionWithDir,
+  nodes?: TreeOptionWithDir[]
 ): [TreeOption[], number] | [null, null] => {
   if (!nodes) return [null, null];
   for (let i = 0; i < nodes.length; ++i) {
@@ -84,54 +87,64 @@ const findSiblingsAndIndex = (
 };
 
 const handleDrop = async ({ node, dragNode, dropPosition }: TreeDropInfo) => {
-  if (dropPosition == "inside" && !node.isLeaf) {
-    // console.log("[inside a folder]", dragNode.label, "to", node.key);
-    const [error, _] = await promiseResult(
-      Move(dragNode.key!.toString(), node.key!.toString())
-    );
-    if (error) {
-      console.error(error);
-      return;
-    }
-    // console.info(
-    //   `successfully moved ${dragNode.key?.toString()} to ${node.key!.toString()}`
-    // );
-  } else {
-    // get the current folder path
-    const [nodeSiblings, nodeIndex] = findSiblingsAndIndex(node, dataRef.value);
-    if (nodeSiblings === null || nodeIndex === null) {
-      return;
-    }
-
-    // set to dot as fallback getting the root dir
-    let dst: string = ".";
-    const pathParts = node.key?.toString().split("/").slice(0, -1);
-    if (!pathParts) {
-      console.error("key is not defined on this file");
-      return;
-    }
-
-    if (pathParts.length > 0) {
-      dst = pathParts.join("/");
-      const dirMap = filesMap.get(dst);
-      if (!dirMap) {
-        console.error("directory path is not exist");
+  try {
+    if (dropPosition == "inside" && !node.isLeaf) {
+      const [error, _] = await promiseResult(
+        Move(dragNode.key!.toString(), node.key!.toString())
+      );
+      if (error) {
+        console.error(error);
         return;
       }
     } else {
-      // set back to empty str because we dont need the dot when moving to root dir
-      dst = "";
-    }
+      const [nodeSiblings, nodeIndex] = findSiblingsAndIndex(
+        node,
+        dataRef.value
+      );
+      if (nodeSiblings === null || nodeIndex === null) {
+        return;
+      }
 
-    const [error, _] = await promiseResult(Move(dragNode.key!.toString(), dst));
-    if (error) {
-      console.error(error);
-      return;
+      let dst: string = ".";
+      const pathParts = node.key?.toString().split("/").slice(0, -1);
+      if (!pathParts) {
+        console.error("key is not defined on this file");
+        return;
+      }
+
+      if (pathParts.length > 0) {
+        dst = pathParts.join("/");
+        if (dst == dragNode.directory) {
+          return;
+        }
+        const files = filesMap.get(dst);
+        if (!files) {
+          console.error("directory path does not exist");
+          return;
+        }
+        // prevent file/folder from moving to their current directory
+        const curr = filesMap.get(`${dst}/${dragNode.label}`);
+        if (curr) {
+          return;
+        }
+      } else {
+        dst = "";
+      }
+
+      const [error, _] = await promiseResult(
+        Move(dragNode.key!.toString(), dst)
+      );
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.info(`successfully moved ${dragNode.key?.toString()} to ${dst}`);
     }
-    console.info(`successfully moved ${dragNode.key?.toString()} to ${dst}`);
+  } finally {
+    await nextTick();
+    emit("get-snippet-paths");
+    filesMap.clear();
   }
-  await nextTick();
-  emit("get-snippet-paths");
 };
 
 const nodeProps = ({ option }: { option: TreeOption }) => {
