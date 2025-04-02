@@ -1,23 +1,43 @@
+:root {
+  --sumiink-1: #0e0e13;
+  --sumiink-2: #14141a;
+  --sumiink-3: #191920;
+  --sumiink-4: #1d1d25;
+  --sumiink-5: #1f1f28; /* editor.bg */
+  --sumiink-6: #282832;
+  --sumiink-7: #32323d;
+  --sumiink-8: #3d3d48;
+  --sumiink-9: #484854;
+  --sumiink-10: #545460;
+
+  --fuji-1: #e0dca1;
+  --fuji-2: #d9d68e;
+  --fuji-3: #d3d17b;
+  --fuji-4: #ccc967;
+  --fuji-5: #dcd7ba; /* editor.fg */
+  --fuji-6: #b6b181;
+  --fuji-7: #a0a76d;
+  --fuji-8: #8a9d5a;
+  --fuji-9: #75894d;
+  --fuji-10: #60743f;
+}
+
 html {
-  background-color: white;
-  color: black;
+  background-color: var(--sumiink-5);
+  color: var(--fuji-5);
 }
 
 body {
   margin: 0;
-  color: black;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
 }
 
-@font-face {
+/* @font-face {
   font-family: "Nunito";
   font-style: normal;
   font-weight: 400;
   src: local(""),
     url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
-}
+} */
 
 #app {
   height: 100vh;

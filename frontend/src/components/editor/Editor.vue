@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick, shallowRef, computed } from "vue";
+import { ref, watch, onMounted, nextTick, shallowRef } from "vue";
 import { LanguageSupport } from "@codemirror/language";
 import CodeMirror from "vue-codemirror6";
+import { NSelect, NSpace } from "naive-ui";
 import { basicSetup } from "codemirror";
 import type { Extension } from "@codemirror/state";
-import { UpdateFile } from "../../wailsjs/go/main/App.js";
-import { promiseResult } from "../utils/promiseResult.js";
+import { UpdateFile } from "../../../wailsjs/go/main/App.js";
+import { promiseResult } from "../../utils/promiseResult.js";
+import { themeExtension } from "./theme.js";
+import { SelectMixedOption } from "naive-ui/es/select/src/interface.js";
 
 const props = defineProps({
   value: String,
@@ -33,11 +36,14 @@ watch(input, (newValue: string) => {
   }, 300);
 });
 
-const availableLanguages = ref(["go", "javascript"]);
+const availableLanguages = ref<SelectMixedOption[]>([
+  { key: "Go", value: "go" },
+  { key: "Javascript", value: "javascript" },
+]);
 const selectedLanguage = ref("go");
 
 // use shallowRef to avoid typescript yelling type inference too deep
-const extensions = shallowRef<Extension[]>([basicSetup]);
+const extensions = shallowRef<Extension[]>([basicSetup, themeExtension]);
 
 const loadLang = async (lang: string): Promise<LanguageSupport | null> => {
   try {
@@ -60,7 +66,7 @@ const loadLang = async (lang: string): Promise<LanguageSupport | null> => {
 const updateExtensions = async (lang: string) => {
   const langSupport = await loadLang(lang);
   if (langSupport) {
-    extensions.value = [basicSetup, langSupport];
+    extensions.value = [basicSetup, langSupport, themeExtension];
     await nextTick();
   }
 };
@@ -83,14 +89,49 @@ watch(
 </script>
 
 <template>
-  <select v-model="selectedLanguage">
-    <option
-      v-for="language in availableLanguages"
-      :key="language"
-      :value="language"
-    >
-      {{ language }}
-    </option>
-  </select>
+  <div class="header">{{ activePath }}</div>
   <code-mirror :extensions="extensions" v-model="input" />
+  <div class="lang">
+    <n-select
+      :bordered="false"
+      :placeholder="selectedLanguage"
+      v-model:value="selectedLanguage"
+      :options="availableLanguages"
+      label-field="key"
+      value-field="value"
+    />
+  </div>
 </template>
+
+<style scoped>
+.header {
+  width: 100%;
+  min-height: 22px;
+  padding: 16px;
+  border-bottom: 1px solid var(--sumiink-9);
+}
+.lang {
+  position: absolute;
+  border-top: 1px solid var(--sumiink-9);
+  width: 100%;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.lang .n-select {
+  width: 130px;
+  margin-left: auto;
+}
+
+.lang :deep(.n-base-selection-input) {
+  left: unset !important;
+  display: flex;
+  justify-content: end;
+  padding: 0 32px 0 12px;
+}
+
+/* .lang :deep(.n-base-selection .n-base-selection__border, ) {
+  display: none !important;
+} */
+</style>

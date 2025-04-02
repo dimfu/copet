@@ -6,8 +6,9 @@ import {
   GetSnippetPaths,
   ReadFile,
 } from "../wailsjs/go/main/App.js";
-import Editor from "./components/Editor.vue";
+import Editor from "./components/editor/Editor.vue";
 import FileTreeNode from "./components/FileTreeNode.vue";
+import GlobalTheme from "./components/GlobalTheme.vue";
 import { promiseResult } from "./utils/promiseResult.js";
 import { main } from "../wailsjs/go/models.js";
 
@@ -96,27 +97,43 @@ onMounted(getSnippetPaths);
 </script>
 
 <template>
-  <n-split
-    v-model:size="split"
-    :on-drag-move="handleDragMove"
-    :on-update:size="handleUpdateSize"
-    direction="horizontal"
-    :max="1"
-    :min="0.15"
-  >
-    <template #1>
-      <div :style="{ height: '200px' }">
-        <input type="text" placeholder="new file name" v-model="newfileInput" />
-        <n-button @click="handleCreateSnippet()">create</n-button>
-        <FileTreeNode
-          :dir-node="snippets"
-          @file-click="handleClickSnippet"
-          @get-snippet-paths="getSnippetPaths"
-        />
-      </div>
-    </template>
-    <template #2>
-      <Editor :active-path="activePath" :value="snippet" />
-    </template>
-  </n-split>
+  <GlobalTheme>
+    <n-split
+      v-model:size="split"
+      :on-drag-move="handleDragMove"
+      :on-update:size="handleUpdateSize"
+      direction="horizontal"
+      :max="1"
+      :min="0.15"
+      :resize-trigger-size="1"
+    >
+      <template #1>
+        <div class="header"></div>
+        <div>
+          <input
+            type="text"
+            placeholder="new file name"
+            v-model="newfileInput"
+          />
+          <n-button @click="handleCreateSnippet()">create</n-button>
+          <FileTreeNode
+            :dir-node="snippets"
+            @file-click="handleClickSnippet"
+            @get-snippet-paths="getSnippetPaths"
+          />
+        </div>
+      </template>
+      <template #2>
+        <Editor :active-path="activePath" :value="snippet" />
+      </template>
+    </n-split>
+  </GlobalTheme>
 </template>
+
+<style scoped>
+.header {
+  min-height: 22px;
+  padding: 16px;
+  border-bottom: 1px solid var(--sumiink-9);
+}
+</style>
