@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import type { TreeDropInfo, TreeOption } from "naive-ui";
-import { NTree } from "naive-ui";
+import { NTree, NIcon } from "naive-ui";
+import { Folder, FolderOpen } from "@vicons/carbon";
 import { main } from "../../wailsjs/go/models";
-import { nextTick, ref, watchEffect } from "vue";
+import { h, nextTick, ref, watchEffect } from "vue";
 import { Move } from "../../wailsjs/go/main/App.js";
 import { promiseResult } from "../utils/promiseResult";
 
@@ -64,6 +65,10 @@ const createData = (
         label: name,
         key: currentPath,
         isLeaf: false,
+        prefix: () =>
+          h(NIcon, null, {
+            default: () => h(Folder),
+          }),
         children: createData(subdir, name),
       };
     }
@@ -147,6 +152,31 @@ const handleDrop = async ({ node, dragNode, dropPosition }: TreeDropInfo) => {
   }
 };
 
+const updatePrefixWithExpaned = (
+  _keys: Array<string | number>,
+  _option: Array<TreeOption | null>,
+  meta: {
+    node: TreeOption | null;
+    action: "expand" | "collapse" | "filter";
+  }
+) => {
+  if (!meta.node) return;
+  switch (meta.action) {
+    case "expand":
+      meta.node.prefix = () =>
+        h(NIcon, null, {
+          default: () => h(FolderOpen),
+        });
+      break;
+    case "collapse":
+      meta.node.prefix = () =>
+        h(NIcon, null, {
+          default: () => h(Folder),
+        });
+      break;
+  }
+};
+
 const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick() {
@@ -160,6 +190,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 watchEffect(() => {
   if (props.dirNode) {
     dataRef.value = createData(props.dirNode);
+    console.log(dataRef.value);
   }
 });
 </script>
@@ -170,6 +201,7 @@ watchEffect(() => {
     block-line
     expand-on-click
     draggable
+    :on-update:expanded-keys="updatePrefixWithExpaned"
     :node-props="nodeProps"
     @drop="handleDrop"
   />
