@@ -3,7 +3,7 @@ import type { TreeDropInfo, TreeOption } from "naive-ui";
 import { NTree, NIcon } from "naive-ui";
 import { Folder, FolderOpen } from "@vicons/carbon";
 import { main } from "../../wailsjs/go/models";
-import { h, nextTick, ref, watchEffect } from "vue";
+import { h, nextTick, onMounted, ref, watchEffect } from "vue";
 import { Move } from "../../wailsjs/go/main/App.js";
 import { promiseResult } from "../utils/promiseResult";
 
@@ -190,7 +190,6 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 watchEffect(() => {
   if (props.dirNode) {
     dataRef.value = createData(props.dirNode);
-    console.log(dataRef.value);
   }
 });
 </script>
@@ -200,7 +199,9 @@ watchEffect(() => {
     :data="dataRef"
     block-line
     expand-on-click
+    show-line
     draggable
+    :render-switcher-icon="() => null"
     :on-update:expanded-keys="updatePrefixWithExpaned"
     :node-props="nodeProps"
     @drop="handleDrop"

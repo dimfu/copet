@@ -59,6 +59,9 @@ const themeOverrides: GlobalThemeOverrides = {
 }
 
 /**tree */
+.n-tree-node-switcher {
+  display: none !important;
+}
 .n-tree-node-content__text {
   color: var(--fuji-5) !important;
 }

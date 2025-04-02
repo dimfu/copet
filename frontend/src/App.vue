@@ -109,13 +109,14 @@ onMounted(getSnippetPaths);
     >
       <template #1>
         <div class="header"></div>
-        <div>
-          <input
+        <div class="tree-container">
+          <!-- <span>Snippets</span> -->
+          <!-- <input
             type="text"
             placeholder="new file name"
             v-model="newfileInput"
           />
-          <n-button @click="handleCreateSnippet()">create</n-button>
+          <n-button @click="handleCreateSnippet()">create</n-button> -->
           <FileTreeNode
             :dir-node="snippets"
             @file-click="handleClickSnippet"
@@ -135,5 +136,8 @@ onMounted(getSnippetPaths);
   min-height: 22px;
   padding: 16px;
   border-bottom: 1px solid var(--sumiink-9);
+}
+.tree-container {
+  padding: 16px 8px;
 }
 </style>
